@@ -11,7 +11,7 @@ const MEAL_COLORS: Record<string, string> = {
 const T = {
   ko: {
     appName: '🍽️ 식단 피드', feed: '피드', upload: '올리기', logout: '로그아웃', login: '구글 로그인',
-    all: '전체', breakfast: '아침', lunch: '점심', dinner: '저녁', mine: '내 피드',
+    all: '전체', breakfast: '아침', lunch: '점심', dinner: '저녁', mine: '내 피드', bookmarks: '북마크',
     latest: '최신순', likes: '좋아요순', calHigh: '칼로리 높은순', calLow: '칼로리 낮은순',
     mealType: '식사 종류', nickname: '닉네임', uploadPhoto: '사진을 클릭해서 올려주세요',
     analyzeBtn: '✨ AI로 분석하고 올리기', analyzing: '분석 중...',
@@ -23,7 +23,7 @@ const T = {
   },
   en: {
     appName: '🍽️ Meal Feed', feed: 'Feed', upload: 'Upload', logout: 'Logout', login: 'Sign in with Google',
-    all: 'All', breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', mine: 'My Feed',
+    all: 'All', breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', mine: 'My Feed', bookmarks: 'Bookmarks',
     latest: 'Latest', likes: 'Most Liked', calHigh: 'Highest Cal', calLow: 'Lowest Cal',
     mealType: 'Meal Type', nickname: 'Nickname', uploadPhoto: 'Click to upload a photo',
     analyzeBtn: '✨ Analyze with AI', analyzing: 'Analyzing...',
@@ -49,6 +49,7 @@ export default function Home() {
   const [comments, setComments] = useState<any[]>([])
   const [commentText, setCommentText] = useState('')
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
+  const [bookmarkIds, setBookmarkIds] = useState<Set<string>>(new Set())
   const [user, setUser] = useState<any>(null)
   const [lang, setLang] = useState<'ko' | 'en'>('ko')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -75,6 +76,12 @@ export default function Home() {
   async function fetchPosts() {
     let query = supabase.from('posts').select('*')
     if (filter === 'mine' && user) query = query.eq('user_id', user.id)
+    else if (filter === 'bookmarks' && user) {
+      const { data: bms } = await supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
+      const ids = bms?.map(b => b.post_id) || []
+      if (ids.length === 0) { setPosts([]); return }
+      query = query.in('id', ids)
+    }
     else if (filter !== 'all') query = query.eq('meal_type', filter)
     if (sortBy === 'latest') query = query.order('created_at', { ascending: false })
     else if (sortBy === 'likes') query = query.order('likes', { ascending: false })
@@ -133,6 +140,17 @@ export default function Home() {
     }
   }
 
+  async function toggleBookmark(postId: string) {
+    if (!user) { alert(lang === 'ko' ? '북마크는 로그인 후 가능해요!' : 'Please login to bookmark!'); return }
+    if (bookmarkIds.has(postId)) {
+      await supabase.from('bookmarks').delete().eq('post_id', postId).eq('user_id', user.id)
+      setBookmarkIds(prev => { const s = new Set(prev); s.delete(postId); return s })
+    } else {
+      await supabase.from('bookmarks').insert({ post_id: postId, user_id: user.id })
+      setBookmarkIds(prev => new Set([...prev, postId]))
+    }
+  }
+
   async function fetchComments(postId: string) {
     const { data } = await supabase.from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true })
     setComments(data || [])
@@ -185,7 +203,7 @@ export default function Home() {
           <div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="flex gap-2 flex-wrap">
-                {['all', 'breakfast', 'lunch', 'dinner', 'mine'].map(f => (
+                {['all', 'breakfast', 'lunch', 'dinner', 'mine', 'bookmarks'].map(f => (
                   <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1 rounded-full text-sm border transition-colors cursor-pointer ${filter === f ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}>
                     {t[f as keyof typeof t]}
                   </button>
@@ -280,6 +298,7 @@ export default function Home() {
               <div className="flex items-center justify-between mt-4 pt-4 border-t">
                 <span className="text-sm text-gray-400">{detail.nickname}</span>
                 <button onClick={() => toggleLike(detail.id)} className={`flex items-center gap-1 text-sm ${likedIds.has(detail.id) ? 'text-pink-500' : 'text-gray-400'}`}>♥ {detail.likes || 0}</button>
+                <button onClick={() => toggleBookmark(detail.id)} className={`flex items-center gap-1 text-sm ${bookmarkIds.has(detail.id) ? 'text-yellow-500' : 'text-gray-400'}`}>🔖 {bookmarkIds.has(detail.id) ? '저장됨' : '저장'}</button>
               </div>
               <div className="mt-4 pt-4 border-t">
                 <p className="text-sm font-medium text-gray-700 mb-3">{t.cheers}</p>

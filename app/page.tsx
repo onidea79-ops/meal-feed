@@ -229,9 +229,14 @@ export default function Home() {
                     <div className="text-xs text-gray-500 truncate mt-0.5">{post.foods?.join(' · ')}</div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-gray-400">{post.nickname}</span>
-                      <button onClick={e => { e.stopPropagation(); toggleLike(post.id) }} className={`flex items-center gap-1 text-xs ${likedIds.has(post.id) ? 'text-pink-500' : 'text-gray-400'}`}>
-                        ♥ {post.likes || 0}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={e => { e.stopPropagation(); toggleLike(post.id) }} className={`flex items-center gap-1 text-xs transition-colors ${likedIds.has(post.id) ? 'text-pink-500' : 'text-gray-400 hover:text-pink-400'}`}>
+                          ♥ {post.likes || 0}
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); toggleBookmark(post.id) }} className={`text-xs transition-colors ${bookmarkIds.has(post.id) ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'}`}>
+                          🔖
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

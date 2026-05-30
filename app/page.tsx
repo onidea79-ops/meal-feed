@@ -159,19 +159,21 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold">{t.appName}</h1>
+          <a href="/" className="text-lg font-semibold hover:opacity-70 transition-opacity">{t.appName}</a>
           <div className="flex items-center gap-2">
             <button onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')} className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer">
               {lang === 'ko' ? 'EN' : 'KO'}
             </button>
             {user ? (
               <>
-                <span className="text-sm text-gray-500 hidden sm:block">{user.user_metadata?.full_name || user.email}</span>
+                
                 <button onClick={() => signOut()} className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer">{t.logout}</button>
               </>
             ) : (
               <button onClick={() => signInWithGoogle()} className="px-4 py-1.5 rounded-full text-sm bg-black text-white hover:bg-gray-800 transition-colors cursor-pointer">{t.login}</button>
             )}
+            
+            {user && <a href="/stats" className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer">통계</a>}
             <button onClick={() => setTab('feed')} className={`px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer ${tab === 'feed' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t.feed}</button>
             {user && <button onClick={() => setTab('upload')} className={`px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer ${tab === 'upload' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t.upload}</button>}
           </div>
